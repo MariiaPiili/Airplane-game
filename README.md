@@ -1,2 +1,2 @@
 # Airplane game
- A simple game, built at Unity/C#, in which a player need to collect coins and avoid collisions with obctacles (mines and rockets).
+ A simple Unity game created with C#, where the player must collect coins while avoiding obstacles such as mines and rockets.
