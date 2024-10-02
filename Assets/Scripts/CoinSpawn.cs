@@ -7,29 +7,16 @@ public class CoinSpawn : MonoBehaviour
     [SerializeField] private GameObject _goldCoin;
     [SerializeField] private GameObject _objectForWinText;
     [SerializeField] private Transform _planeTransform;
-    [SerializeField] private float _numberOfCoinsStart;
-    [Header("Spawn Position Range")]
-    [SerializeField] private float _maxPositionX;
-    [SerializeField] private float _minPositionX;
-    [SerializeField] private float _maxPositionY;
-    [SerializeField] private float _minPositionY;
-    [SerializeField] private float _positionZ;
-
-    private float _count;
+    [SerializeField] private int _numberOfCoinsStart;
 
     private void Start()
-    {        
-        while (_numberOfCoinsStart > _count)
-        {
-            Vector3 randonSpawnPosition = new Vector3(Random.Range(_minPositionX, _maxPositionX), Random.Range(_minPositionY, _maxPositionY), _positionZ);
-            GameObject coin = Instantiate(_goldCoin, randonSpawnPosition, Quaternion.identity);            
-            _count++;
-        }
+    {
+        Spawner.Instance.Spawn(_goldCoin, _numberOfCoinsStart);
     }
 
     private void Update()
     {
-        if (_collectedCoins == _count)
+        if (_collectedCoins == _numberOfCoinsStart)
         {
             _objectForWinText.SetActive(true);
         }
