@@ -4,11 +4,10 @@ public class Mine : MonoBehaviour
 {
     private void OnTriggerEnter(Collider other)
     {
-        PlaneMoves planeMoves;
-        if (other.gameObject.TryGetComponent(out planeMoves))
+        PlaneHealth planeHealth;
+        if (other.gameObject.TryGetComponent(out planeHealth))
         {
-            planeMoves.Health--;
-            Debug.Log(planeMoves.Health + " Health");
+            planeHealth.Health--;            
             Destroy(gameObject);
         }
     }

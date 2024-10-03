@@ -13,7 +13,7 @@ public class Coin : MonoBehaviour
     {
         if (other.gameObject.GetComponent<PlaneMoves>() != null)
         {
-            CoinSpawn._collectedCoins++;            
+            CoinManager.CoinCollected();            
             Destroy(gameObject);
         }
     }

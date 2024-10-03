@@ -33,10 +33,10 @@ public class Rocket : MonoBehaviour
 
     private void OnTriggerEnter(Collider other)
     {
-        PlaneMoves planeMoves;
-        if (other.gameObject.TryGetComponent(out planeMoves))
+        PlaneHealth planeHealth;
+        if (other.gameObject.TryGetComponent(out planeHealth))
         {
-            planeMoves.Health = 0;
+            planeHealth.Health = 0;
             Destroy(gameObject);
         }
     }

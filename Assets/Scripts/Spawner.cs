@@ -1,8 +1,9 @@
+using System.Collections.Generic;
 using UnityEngine;
 
 public class Spawner : MonoBehaviour
 {
-    public static Spawner Instance;
+    [SerializeField] private List<ElementForSpawn> _elementForSpawn;
 
     [Header("Spawn Position Range")]
     [SerializeField] private float _minPositionX;
@@ -13,23 +14,18 @@ public class Spawner : MonoBehaviour
 
     private void Awake()
     {
-        if (Spawner.Instance == null)
+        foreach (var element in _elementForSpawn)
         {
-            Instance = this;
-            DontDestroyOnLoad(gameObject);
-        }
-        else
-        {
-            Destroy(gameObject);
+            Spawn(element.GameObject, element.AmountFoSpawn);
         }
     }
 
-    public void Spawn(GameObject gameObject, int count)
+    private void Spawn(GameObject gameObject, int count)
     {
         for (int i = 0; i < count; i++)
         {
             Vector3 randonSpawnPosition = new Vector3(Random.Range(_minPositionX, _maxPositionX), Random.Range(_minPositionY, _maxPositionY), _positionZ);
-            GameObject newGameObject = Instantiate(gameObject, randonSpawnPosition, Quaternion.identity);            
+            GameObject newGameObject = Instantiate(gameObject, randonSpawnPosition, Quaternion.identity);
         }
     }
 }

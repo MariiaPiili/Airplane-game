@@ -4,35 +4,23 @@ public class PlaneMoves : MonoBehaviour
 {
     [SerializeField] private float _speed;
     [SerializeField] private float _supportForce;
-    [SerializeField] private float _speedRotate;
-    [SerializeField] private GameObject _textDead;
-    [SerializeField] private int _maxHealth;
+    [SerializeField] private float _speedRotate;      
 
     private Rigidbody _rigidbody;
     private float _horizon;
     private float _vertical;
-    private int _health;
-
-    public float Speed => _speed;
-
-    public float Health { get; set; }
+    
+    public float Speed => _speed;    
 
     private void Start()
     {
-        _rigidbody = GetComponent<Rigidbody>();
-        _health = _maxHealth;
+        _rigidbody = GetComponent<Rigidbody>();        
     }
 
     private void Update()
     {
         _horizon = Input.GetAxis("Horizontal");
-        _vertical = Input.GetAxis("Vertical");
-
-        if (_health == 0)
-        {
-            _textDead.SetActive(true);
-            Destroy(gameObject);
-        }
+        _vertical = Input.GetAxis("Vertical");        
     }
 
     private void FixedUpdate()
