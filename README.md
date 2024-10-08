@@ -4,11 +4,12 @@
  
 ![game](https://github.com/MariiaPiili/Airplane-game/blob/main/Airplane%20game.png)
 ## Plane's movement сontrol
-The plane's movement is controlled by `PlaneMoves.cs`. It uses variables for speed, lift force, and rotation speed to provide forward movement and maneuverability. If the plane's health reaches zero, a death message appears on the screen and the plane is destroyed. 
+The plane's movement is controlled by `PlaneMoves.cs`. It uses variables for speed, lift force, and rotation speed to provide forward movement and maneuverability.  
 - Move Upward: W 
 - Move Downward: S
 - Move Left: A
 - Move Rigth: D
+
 ```csharp
 using UnityEngine;
 
@@ -16,35 +17,23 @@ public class PlaneMoves : MonoBehaviour
 {
     [SerializeField] private float _speed;
     [SerializeField] private float _supportForce;
-    [SerializeField] private float _speedRotate;
-    [SerializeField] private GameObject _textDead;
-    [SerializeField] private int _maxHealth;
+    [SerializeField] private float _speedRotate;      
 
     private Rigidbody _rigidbody;
     private float _horizon;
     private float _vertical;
-    private int _health;
-
-    public float Speed => _speed;
-
-    public float Health { get; set; }
+    
+    public float Speed => _speed;    
 
     private void Start()
     {
-        _rigidbody = GetComponent<Rigidbody>();
-        _health = _maxHealth;
+        _rigidbody = GetComponent<Rigidbody>();        
     }
 
     private void Update()
     {
         _horizon = Input.GetAxis("Horizontal");
-        _vertical = Input.GetAxis("Vertical");
-
-        if (_health == 0)
-        {
-            _textDead.SetActive(true);
-            Destroy(gameObject);
-        }
+        _vertical = Input.GetAxis("Vertical");        
     }
 
     private void FixedUpdate()
@@ -61,17 +50,75 @@ public class PlaneMoves : MonoBehaviour
 }
 ```
 
+`PlaneHealth.cs` is responsible for managing the airplane's health in the game. It has fields for maximum health (_maxHealth), a display object for when the airplane is destroyed (_textDead), and the current health value (_health). Upon starting, the airplane's health is set to the maximum value. In the `Update` method, the class checks the health; if it reaches zero, the airplane is destroyed. 
+
+```csharp
+using UnityEngine;
+
+public class PlaneHealth : MonoBehaviour
+{
+    [SerializeField] private int _maxHealth;
+    [SerializeField] private GameObject _textDead;
+
+    private int _health;
+
+    public int Health
+    {
+        get
+        {
+            return _health;
+        }
+        set
+        {
+            _health = value;
+        }
+    }
+
+    private void Start()
+    {
+        _health = _maxHealth;
+    }
+
+    private void Update()
+    {
+        if (_health == 0)
+        {
+            _textDead.SetActive(true);
+            Destroy(gameObject);
+        }
+    }
+}
+```
+
 ## Creating collision objects
 
-`Spawner.cs` is responsible for spawning objects in random positions within a specified range in the game. It allows the creation of multiple instances of a given object at random coordinates, with configurable boundaries for X and Y positions. It also implements the Singleton pattern, ensuring only one instance of this class exists during the game. 
+`ElementForSpawn.cs` is designed to store information about objects that will be spawned. It contains public field for the object that will be spawned (GameObject) and public field for the number of instances of this object to spawn (AmountFoSpawn). The class is Serializable, so it is easy to configure in Unity's Inspector. 
 
-`Spawn()` method takes two parameters: a GameObject to spawn and an integer count, which specifies how many instances of the object to create. Inside the method, a loop runs based on the count, and for each iteration, a random position is generated using `Random.Range()` for X and Y values. A new instance of the provided GameObject is then instantiated at that position with no rotation.
 ```csharp
+using System;
+using System.Collections;
+using System.Collections.Generic;
+using UnityEngine;
+
+[Serializable]
+public class ElementForSpawn 
+{
+    public GameObject GameObject;
+    public int AmountFoSpawn;
+}
+```
+
+`Spawner.cs` handles the spawning of objects in the game. It contains a serialized list, _elementForSpawn, which stores the different ElementForSpawn objects to be spawned. Additionally, it defines spawn position ranges with _minPositionX, _minPositionY, _maxPositionX, _maxPositionY, and _positionZ, specifying the coordinates within which the objects can appear.
+
+In the `Awake` method `Spawner.cs` iterates through each element in _elementForSpawn and calls the `Spawn` method. The `Spawn` method instantiates the specified number of instances (AmountFoSpawn) of each GameObject at random positions within the defined range. 
+
+```csharp
+using System.Collections.Generic;
 using UnityEngine;
 
 public class Spawner : MonoBehaviour
 {
-    public static Spawner Instance;
+    [SerializeField] private List<ElementForSpawn> _elementForSpawn;
 
     [Header("Spawn Position Range")]
     [SerializeField] private float _minPositionX;
@@ -82,34 +129,29 @@ public class Spawner : MonoBehaviour
 
     private void Awake()
     {
-        if (Spawner.Instance == null)
+        foreach (var element in _elementForSpawn)
         {
-            Instance = this;
-            DontDestroyOnLoad(gameObject);
-        }
-        else
-        {
-            Destroy(gameObject);
+            Spawn(element.GameObject, element.AmountFoSpawn);
         }
     }
 
-    public void Spawn(GameObject gameObject, int count)
+    private void Spawn(GameObject gameObject, int count)
     {
         for (int i = 0; i < count; i++)
         {
             Vector3 randonSpawnPosition = new Vector3(Random.Range(_minPositionX, _maxPositionX), Random.Range(_minPositionY, _maxPositionY), _positionZ);
-            GameObject newGameObject = Instantiate(gameObject, randonSpawnPosition, Quaternion.identity);            
+            GameObject newGameObject = Instantiate(gameObject, randonSpawnPosition, Quaternion.identity);
         }
     }
 }
 ```
+
 The airplane in the game can collide with coins (to collect them), mines or rockets.
 
 ### Coins
 
-`Coin.cs` handles the behavior of the coin collectible in the game. It rotates the coin continuously and detects collisions with the player’s plane. The coin rotates around the Y-axis. 
+`Coin.cs` handles the behavior of a coin. In the `Update` method, the coin rotates around its vertical axis at a specified speed, _speedRot. In the `OnTriggerEnter` method, it checks if the object colliding with the coin has the PlaneMoves component. If so, it calls the `CoinCollected` method from CoinManager to increment the collected coin count, and then destroys the coin.
 
-When the plane collides with the coin, the coin is "collected." The total count of collected coins is increased, and the coin is destroyed, simulating the collection.
 ```csharp
 using UnityEngine;
 
@@ -126,28 +168,31 @@ public class Coin : MonoBehaviour
     {
         if (other.gameObject.GetComponent<PlaneMoves>() != null)
         {
-            CoinSpawn._collectedCoins++;            
+            CoinManager.CoinCollected();            
             Destroy(gameObject);
         }
     }
 }
 ```
-`CoinSpawn.cs` is responsible for spawning coins at the start of the game and checking if the player has collected all of them.
+
+`CoinManager.cs` tracks the number of collected coins and manages the display of a win message. In the `Start` method, it calculates the total number of coins in the scene at the beginning of the game. In the `Update` method, it checks if all coins have been collected; if they have, it activates the _objectForWinText to display a win message. The `CoinCollected` method increments the _collectedCoins counter each time a coin is collected by the player.
+
 ```csharp
+using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
 
-public class CoinSpawn : MonoBehaviour
-{
-    public static int _collectedCoins;
-
-    [SerializeField] private GameObject _goldCoin;
+public class CoinManager : MonoBehaviour
+{   
     [SerializeField] private GameObject _objectForWinText;
     [SerializeField] private Transform _planeTransform;
-    [SerializeField] private int _numberOfCoinsStart;
+    
+    private int _numberOfCoinsStart;   
+    private static int _collectedCoins = 0;
 
     private void Start()
     {
-        Spawner.Instance.Spawn(_goldCoin, _numberOfCoinsStart);
+        _numberOfCoinsStart = FindObjectsOfType<Coin>().Length;
     }
 
     private void Update()
@@ -157,27 +202,18 @@ public class CoinSpawn : MonoBehaviour
             _objectForWinText.SetActive(true);
         }
     }
+
+    public static void CoinCollected()
+    {
+        _collectedCoins++;
+    }
 }
 ```
 
 ### Mine
 
-`MineSpawn.cs` is responsible for spawning a set number of mines at the start of the game. In the `Start()` method, it uses the `Spawner.cs` to create the specified number of mines.
-```csharp
-using UnityEngine;
+`Mine.cs` manages the behavior of a mine. When an object enters its trigger collider (OnTriggerEnter), it checks if the colliding object has a PlaneHealth component. If so, it decreases the airplane's health by one and then destroys itself.
 
-public class MineSpawn : MonoBehaviour
-{
-    [SerializeField] private GameObject _mine;
-    [SerializeField] private int _numberOfMineStart;    
-
-    private void Start()
-    {
-        Spawner.Instance.Spawn(_mine, _numberOfMineStart);
-    }
-}
-```
-`Mine.cs` handles what happens when a mine collides with the player’s airplane. In `OnTriggerEnter()` method it detects if the object is the player’s plane, decreases the plane’s health by 1, and then destroys the mine.
 ```csharp
 using UnityEngine;
 
@@ -185,11 +221,10 @@ public class Mine : MonoBehaviour
 {
     private void OnTriggerEnter(Collider other)
     {
-        PlaneMoves planeMoves;
-        if (other.gameObject.TryGetComponent(out planeMoves))
+        PlaneHealth planeHealth;
+        if (other.gameObject.TryGetComponent(out planeHealth))
         {
-            planeMoves.Health--;
-            Debug.Log(planeMoves.Health + " Health");
+            planeHealth.Health--;            
             Destroy(gameObject);
         }
     }
@@ -198,22 +233,8 @@ public class Mine : MonoBehaviour
 
 ### Rocket
 
-`RocketSpawn.cs` spawns a specified number of rockets at the start of the game. It uses `Spawner.cs` to generate the rockets.
-```csharp
-using UnityEngine;
+`Rocket.cs` controls a rocket that targets the player’s airplane. In the `Awake` method, it finds and stores the player's plane's transform. In the `Start` method, it retrieves the rocket's Rigidbody component. In `Update` it adjusts its rotation to face the plane. In `FixedUpdate` it applies a forward force to move the rocket towards the plane at a speed specified by _speed. When it collides with an object with a PlaneHealth component, it sets the airplane’s health to zero and destroys itself.
 
-public class RocketSpawn : MonoBehaviour
-{
-    [SerializeField] private GameObject _rocketprefab;
-    [SerializeField] private int _rocketAmount;
-
-    private void Start()
-    {
-        Spawner.Instance.Spawn(_rocketprefab, _rocketAmount);
-    }
-}
-```
-`Rocket.cs` controls the behavior of the rockets. It tracks the player's plane and rotates to face it, then moves toward the plane at a constant speed. If the rocket collides with the plane, the plane's health is set to zero, and the rocket is destroyed.
 ```csharp
 using UnityEngine;
 
@@ -250,10 +271,10 @@ public class Rocket : MonoBehaviour
 
     private void OnTriggerEnter(Collider other)
     {
-        PlaneMoves planeMoves;
-        if (other.gameObject.TryGetComponent(out planeMoves))
+        PlaneHealth planeHealth;
+        if (other.gameObject.TryGetComponent(out planeHealth))
         {
-            planeMoves.Health = 0;
+            planeHealth.Health = 0;
             Destroy(gameObject);
         }
     }
